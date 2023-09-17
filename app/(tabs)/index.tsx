@@ -3,9 +3,10 @@ import { StyleSheet, useColorScheme, StatusBar, Button } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useNavigation, useRouter } from 'expo-router';
-import { checkUser, logout, updateUser } from '@/api';
-import { User } from '@/types';
+import { checkUser, connectSocket, logout, updateUser } from '@/api';
+import { Driver, DriverType, Account } from '@/types';
 import { TextInput } from 'react-native-gesture-handler';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 export default function TabIndexScreen() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -15,8 +16,11 @@ export default function TabIndexScreen() {
     backgroundColor: isDarkMode ? Colors.dark : Colors.light,
   };
 
-  const [user, setUser] = useState<User | undefined>();
-  const [updatedUser, setUpdatedUser] = useState<User | undefined>();
+  const [user, setUser] = useState<Account | undefined>();
+  const [updatedUser, setUpdatedUser] = useState<Account | undefined>();
+  const [open, setOpen] = useState<boolean>(false);
+  const [driverType, setDriverType] = useState<number | null>(null);
+  const [driverTypeList, setDriverTypeList] = useState<DriverType[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -38,7 +42,7 @@ export default function TabIndexScreen() {
     router.push('/modal?viewType=AUTH_VIEW');
   };
 
-  const handleUpdate = async (id: string, updatedUser: User) => {
+  const handleUpdate = async (id: string, updatedUser: Account) => {
     const data = await updateUser(id, updatedUser);
     setUser(undefined);
     setUser(data);
@@ -49,6 +53,8 @@ export default function TabIndexScreen() {
     router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
   };
 
+  const handleOpenDropdown = () => {};
+
   return (
     <View style={styles.container}>
       {!user ? (
@@ -58,30 +64,59 @@ export default function TabIndexScreen() {
           <Text>Name: {user.displayName}</Text>
           <Text>Email: {user.email}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text>Phone number: {user.phoneNumber}</Text>
             {!user.phoneNumber && (
               <TextInput
                 placeholder="Enter your phone number"
                 onChangeText={(text) => {
                   if (updatedUser) {
-                    const _updateUser: User = {
+                    const _updateUser: Account = {
                       ...updatedUser,
                       phoneNumber: text,
                     };
                     setUpdatedUser(_updateUser);
                   }
                 }}
+                value={user.phoneNumber}
               />
             )}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text>Address: {user.address}</Text>
             {!user.address && (
               <TextInput
                 placeholder="Enter your address"
                 onChangeText={(text) => {
                   if (updatedUser) {
-                    const _updateUser: User = { ...updatedUser, address: text };
+                    const _updateUser: Account = {
+                      ...updatedUser,
+                      address: text,
+                    };
+                    setUpdatedUser(_updateUser);
+                  }
+                }}
+                value={user.address}
+              />
+            )}
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {!user.address && (
+              <DropDownPicker
+                open={open}
+                value={user.Driver?.driverType.id || null}
+                items={driverTypeList.map((item) => {
+                  return {
+                    label: item.name,
+                    value: item.id,
+                  };
+                })}
+                setOpen={setOpen}
+                setValue={setDriverType}
+                setItems={setDriverTypeList}
+                onChangeValue={(value) => {
+                  if (updatedUser) {
+                    const _updateUser: Account = {
+                      ...updatedUser,
+                      driverType: value,
+                    };
                     setUpdatedUser(_updateUser);
                   }
                 }}

@@ -48,7 +48,7 @@ const LoginWebView = () => {
         style={{ flex: 1 }}
         onLoad={() => setIsloading(false)}
         source={{
-          uri: `${EXPO_PUBLIC_API_URL}/v1/auth/azureAD/login`,
+          uri: `${EXPO_PUBLIC_API_URL}/v1/auth/azureAD/login-for-drivers`,
         }}
         domStorageEnabled
         onNavigationStateChange={handleNavigationStateChange}
