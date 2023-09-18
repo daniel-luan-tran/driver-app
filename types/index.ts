@@ -39,13 +39,12 @@ export type Account = {
   phoneNumber: string;
   address: string;
   displayName: string;
-  driverType: number | null;
+  driverTypeId: number | null;
   Driver: Driver | null;
 };
 
 export type Driver = {
-  account: Account;
-  BookingHistory: BookingHistory[];
+  driverTypeId: number;
   driverType: DriverType;
   // currentPlace?: Coordinates;
 };

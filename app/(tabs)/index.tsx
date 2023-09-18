@@ -3,7 +3,14 @@ import { StyleSheet, useColorScheme, StatusBar, Button } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import Colors from '@/constants/Colors';
 import { useNavigation, useRouter } from 'expo-router';
-import { checkUser, connectSocket, logout, updateUser } from '@/api';
+import {
+  checkDriverRole,
+  checkUser,
+  connectSocket,
+  getDriverTypes,
+  logout,
+  updateUser,
+} from '@/api';
 import { Driver, DriverType, Account } from '@/types';
 import { TextInput } from 'react-native-gesture-handler';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -21,13 +28,17 @@ export default function TabIndexScreen() {
   const [open, setOpen] = useState<boolean>(false);
   const [driverType, setDriverType] = useState<number | null>(null);
   const [driverTypeList, setDriverTypeList] = useState<DriverType[]>([]);
+  const [address, setAddress] = useState<string>('');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
 
   useEffect(() => {
     const getUser = async () => {
       try {
         const data = await checkUser();
         setUser(data);
+        console.log(data);
         setUpdatedUser(data);
+        console.log(updatedUser);
       } catch (error) {
         setUser(undefined);
       }
@@ -37,6 +48,32 @@ export default function TabIndexScreen() {
       getUser();
     });
   }, []);
+
+  useEffect(() => {
+    const getDriverTypeList = async () => {
+      const _driverTypes = await getDriverTypes();
+      setDriverTypeList(_driverTypes);
+    };
+    getDriverTypeList();
+
+    setDriverType(user?.Driver?.driverTypeId || null);
+
+    setAddress(user?.address || '');
+    setPhoneNumber(user?.phoneNumber || '');
+
+    const checkValidRole = async () => {
+      try {
+        await checkDriverRole();
+      } catch (error) {
+        const logoutLink = await logout();
+        router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
+      }
+    };
+    checkValidRole();
+    navigation.addListener('focus', (payload) => {
+      checkValidRole();
+    });
+  }, [user]);
 
   const openModalLogin = async () => {
     router.push('/modal?viewType=AUTH_VIEW');
@@ -53,55 +90,65 @@ export default function TabIndexScreen() {
     router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
   };
 
-  const handleOpenDropdown = () => {};
-
   return (
     <View style={styles.container}>
       {!user ? (
         <Button title="Login with Azure Microsoft" onPress={openModalLogin} />
       ) : (
         <View>
-          <Text>Name: {user.displayName}</Text>
-          <Text>Email: {user.email}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {!user.phoneNumber && (
-              <TextInput
-                placeholder="Enter your phone number"
-                onChangeText={(text) => {
-                  if (updatedUser) {
-                    const _updateUser: Account = {
-                      ...updatedUser,
-                      phoneNumber: text,
-                    };
-                    setUpdatedUser(_updateUser);
-                  }
-                }}
-                value={user.phoneNumber}
-              />
-            )}
+            <Text>Name: {user.displayName}</Text>
+            <TextInput value={user.displayName || ''} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {!user.address && (
-              <TextInput
-                placeholder="Enter your address"
-                onChangeText={(text) => {
-                  if (updatedUser) {
-                    const _updateUser: Account = {
-                      ...updatedUser,
-                      address: text,
-                    };
-                    setUpdatedUser(_updateUser);
-                  }
-                }}
-                value={user.address}
-              />
-            )}
+            <Text>Email: {user.displayName}</Text>
+            <TextInput value={user.email || ''} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {!user.address && (
+            <Text>Phone number: </Text>
+            <TextInput
+              placeholder="Enter your phone number"
+              onChangeText={(text) => {
+                if (updatedUser) {
+                  const _updateUser: Account = {
+                    ...updatedUser,
+                    phoneNumber: text,
+                  };
+                  setPhoneNumber(text);
+                  setUpdatedUser(_updateUser);
+                }
+              }}
+              value={phoneNumber}
+            />
+          </View>
+          {!phoneNumber && (
+            <Text style={{ color: 'red' }}>Phone number is required!</Text>
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text>Address: </Text>
+            <TextInput
+              placeholder="Enter your address"
+              onChangeText={(text) => {
+                if (updatedUser) {
+                  const _updateUser: Account = {
+                    ...updatedUser,
+                    address: text,
+                  };
+                  setAddress(text);
+                  setUpdatedUser(_updateUser);
+                }
+              }}
+              value={address}
+            />
+          </View>
+          {!address && (
+            <Text style={{ color: 'red' }}>Address is required!</Text>
+          )}
+          <View>
+            <View style={{ flexDirection: 'row', height: 200, marginTop: 10 }}>
               <DropDownPicker
                 open={open}
-                value={user.Driver?.driverType.id || null}
+                value={driverType}
                 items={driverTypeList.map((item) => {
                   return {
                     label: item.name,
@@ -111,27 +158,44 @@ export default function TabIndexScreen() {
                 setOpen={setOpen}
                 setValue={setDriverType}
                 setItems={setDriverTypeList}
-                onChangeValue={(value) => {
+                onSelectItem={(value) => {
                   if (updatedUser) {
                     const _updateUser: Account = {
                       ...updatedUser,
-                      driverType: value,
+                      driverTypeId: value.value || null,
                     };
+                    setDriverType(value.value || null);
+                    console.log(_updateUser);
                     setUpdatedUser(_updateUser);
                   }
                 }}
               />
+            </View>
+            {!driverType && (
+              <Text
+                style={{
+                  color: 'red',
+                  position: 'absolute',
+                  top: 25,
+                  right: 30,
+                }}
+              >
+                Driver type is required!
+              </Text>
             )}
           </View>
-          {(!user.address || !user.phoneNumber) && (
-            <Button
-              title="Update user infomation"
-              onPress={() => {
-                if (updatedUser) handleUpdate(user.id, updatedUser);
-              }}
-            />
-          )}
-          <Button color={'red'} title="Login out" onPress={handleLogout} />
+          <View>
+            {(!user.address || !user.phoneNumber || !user.driverTypeId) && (
+              <Button
+                title="Update user infomation"
+                onPress={() => {
+                  if (updatedUser) handleUpdate(user.id, updatedUser);
+                }}
+                disabled={address && phoneNumber && driverType ? false : true}
+              />
+            )}
+            <Button color={'red'} title="Login out" onPress={handleLogout} />
+          </View>
         </View>
       )}
       <StatusBar
@@ -147,6 +211,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 20,

@@ -5,7 +5,6 @@ export const updateUser = async (
   id: string,
   updatedUser: Account,
 ): Promise<Account> => {
-  console.log(updatedUser);
   const response = await axios.put<Account>(
     `/v1/azureDrivers/${id}`,
     {
@@ -13,6 +12,7 @@ export const updateUser = async (
     },
     authConfig,
   );
+
   return response.data;
 };
 
@@ -21,5 +21,7 @@ export const checkUser = async (): Promise<Account> => {
     '/v1/auth/azureAD/check',
     authConfig,
   );
+
+  console.log('response.data', response.data);
   return response.data;
 };

@@ -1,25 +1,15 @@
-import { Driver } from '@/types';
+import { Driver, DriverType } from '@/types';
 import axios, { authConfig } from './axios'; // authConfig
 
-export const updateUser = async (
-  id: string,
-  updatedUser: Driver,
-): Promise<Driver> => {
-  console.log(updatedUser);
-  const response = await axios.put<Driver>(
-    `/v1/azureDrivers/${id}`,
-    {
-      ...updatedUser,
-    },
+export const getDriverTypes = async (): Promise<DriverType[]> => {
+  const res = await axios.get<DriverType[]>(
+    '/v1/azureDrivers/get-driver-types',
     authConfig,
   );
-  return response.data;
+  return res.data;
 };
 
-export const checkUser = async (): Promise<Driver> => {
-  const response = await axios.get<Driver>(
-    '/v1/auth/azureAD/check',
-    authConfig,
-  );
-  return response.data;
+export const checkDriverRole = async (): Promise<DriverType> => {
+  const res = await axios.get('/v1/azureDrivers/check-role');
+  return res.data;
 };

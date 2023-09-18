@@ -1,8 +1,50 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, useColorScheme, StatusBar, Button } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import DestinationSearch from '@/components/DestinationSearch/DestinationSearch';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { checkDriverRole } from '@/api';
 
 export default function TabThreeScreen() {
+  const [isValidRole, setIsValidRole] = useState<boolean>(false);
+  const router = useRouter();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    const checkValidRole = async () => {
+      setIsValidRole(true);
+      try {
+        const _driverType = await checkDriverRole();
+        if (!_driverType) setIsValidRole(false);
+        setIsValidRole(true);
+      } catch (error) {
+        setIsValidRole(false);
+      }
+    };
+
+    checkValidRole();
+    navigation.addListener('focus', (payload) => {
+      checkValidRole();
+    });
+  }, []);
+
+  const handleOpenUpdateProfile = () => {
+    router.push('/(tabs)/');
+  };
+
+  if (!isValidRole)
+    return (
+      <View style={styles.container}>
+        <View style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+          <Text style={{ marginBottom: 10 }}>You are Passenger or Driver?</Text>
+          <Button
+            title="Update your profile"
+            onPress={handleOpenUpdateProfile}
+          />
+        </View>
+      </View>
+    );
+
   return (
     <View style={styles.container}>
       <DestinationSearch />
