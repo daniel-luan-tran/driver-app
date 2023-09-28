@@ -32,9 +32,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="TestSocketTab"
+        name="FindPassengerTab"
         options={{
-          title: 'Test socket',
+          title: 'Find Passenger',
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
         }}
       />

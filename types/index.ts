@@ -44,7 +44,15 @@ export type Account = {
 };
 
 export type Driver = {
+  accountId: string;
+  account: Account;
   driverTypeId: number;
   driverType: DriverType;
+  // currentPlace?: Coordinates;
+};
+
+export type User = {
+  accountId: string;
+  account: Account;
   // currentPlace?: Coordinates;
 };
