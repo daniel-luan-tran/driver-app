@@ -14,6 +14,7 @@ import {
 import { useRoute } from '@react-navigation/native';
 import LogoutView from '@/components/LogoutView/LogoutView';
 import SearchResult from '@/components/SearchResult/SearchResult';
+import AuthViewLocal from '@/components/AuthViewLocal/AuthViewLocal';
 
 export default function ModalScreen() {
   const route = useRoute();
@@ -23,6 +24,7 @@ export default function ModalScreen() {
       <ScrollView contentInsetAdjustmentBehavior="automatic">
         <View style={styles.container}>
           {viewType == DynamicView.AUTH_VIEW && <AuthView />}
+          {viewType == DynamicView.AUTH_VIEW_LOCAL && <AuthViewLocal />}
           {viewType == DynamicView.LOGOUT_VIEW && (
             <LogoutView logoutLink={logoutLink} />
           )}

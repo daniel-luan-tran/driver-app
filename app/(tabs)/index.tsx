@@ -8,12 +8,14 @@ import {
   checkUser,
   connectSocket,
   getDriverTypes,
+  localLogout,
   logout,
   updateUser,
 } from '@/api';
 import { Driver, DriverType, Account } from '@/types';
 import { TextInput } from 'react-native-gesture-handler';
 import DropDownPicker from 'react-native-dropdown-picker';
+import axios from '@/api/axios';
 
 export default function TabIndexScreen() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -30,19 +32,25 @@ export default function TabIndexScreen() {
   const [driverTypeList, setDriverTypeList] = useState<DriverType[]>([]);
   const [address, setAddress] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [isLocalLogin, setIsLocalLogin] = useState<boolean | undefined>();
+  const getUser = async () => {
+    try {
+      const data = await checkUser();
+      setUser(data);
+      console.log(data);
+      setUpdatedUser(data);
+      console.log(updatedUser);
 
-  useEffect(() => {
-    const getUser = async () => {
-      try {
-        const data = await checkUser();
-        setUser(data);
-        console.log(data);
-        setUpdatedUser(data);
-        console.log(updatedUser);
-      } catch (error) {
-        setUser(undefined);
+      if (!data.azureOid) {
+        setIsLocalLogin(true);
+      } else {
+        setIsLocalLogin(false);
       }
-    };
+    } catch (error) {
+      setUser(undefined);
+    }
+  };
+  useEffect(() => {
     getUser();
     navigation.addListener('focus', (payload) => {
       getUser();
@@ -79,6 +87,10 @@ export default function TabIndexScreen() {
     router.push('/modal?viewType=AUTH_VIEW');
   };
 
+  const openModalLocalLogin = async () => {
+    router.push('/modal?viewType=AUTH_VIEW_LOCAL');
+  };
+
   const handleUpdate = async (id: string, updatedUser: Account) => {
     const data = await updateUser(id, updatedUser);
     setUser(undefined);
@@ -90,10 +102,26 @@ export default function TabIndexScreen() {
     router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
   };
 
+  const handleLocalLogout = async () => {
+    await localLogout();
+    await getUser();
+  };
+
   return (
     <View style={styles.container}>
       {!user ? (
-        <Button title="Login with Azure Microsoft" onPress={openModalLogin} />
+        <View>
+          <Button title="Login with Azure Microsoft" onPress={openModalLogin} />
+          <Button title="Local login" onPress={openModalLocalLogin} />
+
+          <Button
+            title="Hello"
+            onPress={async () => {
+              const hello = await axios.get('/v1/auth/hello');
+              console.log(hello.data);
+            }}
+          />
+        </View>
       ) : (
         <View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -194,7 +222,15 @@ export default function TabIndexScreen() {
                 disabled={address && phoneNumber && driverType ? false : true}
               />
             )}
-            <Button color={'red'} title="Login out" onPress={handleLogout} />
+            {isLocalLogin ? (
+              <Button
+                color={'red'}
+                title="Local logout"
+                onPress={handleLocalLogout}
+              />
+            ) : (
+              <Button color={'red'} title="Login out" onPress={handleLogout} />
+            )}
           </View>
         </View>
       )}

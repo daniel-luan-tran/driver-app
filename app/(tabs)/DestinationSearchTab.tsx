@@ -14,8 +14,8 @@ export default function TabThreeScreen() {
     const checkValidRole = async () => {
       setIsValidRole(true);
       try {
-        const _driverType = await checkDriverRole();
-        if (!_driverType) setIsValidRole(false);
+        const _driver = await checkDriverRole();
+        if (!_driver) setIsValidRole(false);
         setIsValidRole(true);
       } catch (error) {
         setIsValidRole(false);
@@ -38,7 +38,7 @@ export default function TabThreeScreen() {
         <View style={{ marginTop: 'auto', marginBottom: 'auto' }}>
           <Text style={{ marginBottom: 10 }}>You are Passenger or Driver?</Text>
           <Button
-            title="Update your profile"
+            title="Log in and update your profile"
             onPress={handleOpenUpdateProfile}
           />
         </View>

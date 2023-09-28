@@ -9,7 +9,7 @@ export const getDriverTypes = async (): Promise<DriverType[]> => {
   return res.data;
 };
 
-export const checkDriverRole = async (): Promise<DriverType> => {
+export const checkDriverRole = async (): Promise<Driver> => {
   const res = await axios.get('/v1/azureDrivers/check-role');
   return res.data;
 };
