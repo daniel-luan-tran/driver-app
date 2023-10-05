@@ -6,9 +6,7 @@ import RouteMap from '../RouteMap/RouteMap';
 export default function SearchResult() {
   return (
     <View style={styles.searchResultContainer}>
-      <View style={styles.mapContainer}>
-        <RouteMap />
-      </View>
+      <View style={styles.mapContainer}>{/* <RouteMap /> */}</View>
       <View style={styles.driverTypeContainer}>
         <DriverTypes />
       </View>

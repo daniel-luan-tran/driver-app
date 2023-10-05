@@ -8,25 +8,36 @@ import {
   StyleSheet,
   TextInput,
   useColorScheme,
+  TouchableOpacity,
 } from 'react-native';
 import { Text, View } from '../Themed';
 import Colors from '@/constants/Colors';
 import io, { Socket } from 'socket.io-client';
 import { connectSocket } from '@/api/connectSocket';
 import { checkDriverRole, checkUser } from '@/api';
-import { Account } from '@/types';
+import { Account, PassengerRoute } from '@/types';
 import { useNavigation, useRouter } from 'expo-router';
+import * as Location from 'expo-location';
+import RouteMap from '../RouteMap/RouteMap';
 
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
+enum Status {
+  FINDING = 'FINDING',
+  STOPPED_FINDING = 'STOP_FINDING',
+  FOUND_PASSENGER = 'FOUND_PASSENGER',
+}
+
 export default function FindPassenger() {
   const [socket, setSocket] = useState<Socket>();
-  const [status, setStatus] = useState<boolean>(false);
+  const [status, setStatus] = useState<Status>();
   const [disconnectCountdown, setDisconnectCountdown] = useState<number>(0);
   const [activeIntervals, setActiveIntervals] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
   const [driver, setDriver] = useState<Account | undefined>();
+  const [passengerRoute, setPassengerRoute] = useState<PassengerRoute>();
+
   const isDarkMode = useColorScheme() === 'dark';
   const timeoutConnect = 60; // Second
   const navigation = useNavigation();
@@ -76,17 +87,18 @@ export default function FindPassenger() {
   }, []);
 
   useEffect(() => {
-    if (status) {
-      const timerId = setInterval(() => {
-        setDisconnectCountdown((prevCount) => prevCount - 1);
-      }, 1000);
-      setActiveIntervals((prevIds) => [
-        ...prevIds,
-        timerId as unknown as number,
-      ]);
-    } else {
-      activeIntervals.forEach((intervalId) => clearInterval(intervalId));
-    }
+    // if (status) {
+    //   const timerId = setInterval(() => {
+    //     setDisconnectCountdown((prevCount) => prevCount - 1);
+    //   }, 1000);
+    //   setActiveIntervals((prevIds) => [
+    //     ...prevIds,
+    //     timerId as unknown as number,
+    //   ]);
+    // } else {
+    //   activeIntervals.forEach((intervalId) => clearInterval(intervalId));
+    // }
+    console.log(status);
   }, [status]);
 
   const passengerRequest = async () => {
@@ -95,15 +107,26 @@ export default function FindPassenger() {
     const _socket = await connectSocket();
     setConnecting(true);
     if (_socket) {
-      _socket.on('welcome', (jsonData) => {
-        setStatus(jsonData.status);
+      setStatus(Status.FINDING);
+      _socket.on('connect', () => {
+        _socket.emit('passengerRequest', 'passengerRequest');
+
+        _socket.on('driverRequest', (data) => {
+          console.log('passengerRoute: ', data);
+          setPassengerRoute(data);
+          setLoading(false);
+          setStatus(Status.FOUND_PASSENGER);
+        });
       });
-      _socket.on('driverLocation', (jsonData) => {
-        setStatus(jsonData.status);
-      });
+
       _socket.on('disconnect', () => {
-        setStatus(false);
+        setStatus(Status.STOPPED_FINDING);
       });
+
+      _socket.on('passengerDisconnect', () => {
+        _socket.disconnect();
+      });
+
       setSocket(_socket);
       // setInterval(() => {
       //   _socket.disconnect();
@@ -111,12 +134,20 @@ export default function FindPassenger() {
     }
   };
 
+  const passengerAccept = async () => {
+    if (!socket) return;
+    const location = await Location.getCurrentPositionAsync({});
+    const { coords } = location;
+    socket.emit('acceptPassenger', coords);
+  };
+
   const onDisconnectSocket = async () => {
     console.log(_apiUrl);
     if (_apiUrl) {
-      socket?.disconnect();
+      socket?.emit('driverDisconnect');
+      // socket?.disconnect();
       if (socket?.disconnected) {
-        setStatus(false);
+        setStatus(Status.STOPPED_FINDING);
         setConnecting(false);
         setLoading(false);
       }
@@ -149,33 +180,52 @@ export default function FindPassenger() {
 
   return (
     <SafeAreaView>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor.background}
-      />
+      <View style={{ padding: 20 }}>
+        <StatusBar
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={backgroundStyle.backgroundColor.background}
+        />
+        <View style={{ height: '80%' }}>
+          <RouteMap passengerRoute={passengerRoute} />
+        </View>
+        <TouchableOpacity style={{ marginBottom: 0 }}>
+          {loading ? (
+            <ActivityIndicator size="large" />
+          ) : status === Status.FOUND_PASSENGER ? (
+            <Button title="Accept passenger" onPress={passengerAccept} />
+          ) : (
+            <Button title="Find passenger" onPress={passengerRequest} />
+          )}
 
-      <View>
-        {loading ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <Button title="Find passenger" onPress={passengerRequest} />
-        )}
-
-        {connecting && (
-          <Button
-            title="Stop finding"
-            onPress={onDisconnectSocket}
-            color={'grey'}
-          />
-        )}
-        <Text style={{ color: status ? 'green' : 'orange' }}>
-          Status: {status ? 'Finding passenger! ' : 'Stopped finding! '}
-          {/* {status &&
-              `Will disconnect in ${disconnectCountdown} second${
-                disconnectCountdown > 1 ? 's' : ''
-              }`} */}
-        </Text>
-        <Text>apiUrl: {_apiUrl}</Text>
+          {connecting && (
+            <Button
+              title="Stop finding"
+              onPress={onDisconnectSocket}
+              color={'grey'}
+            />
+          )}
+          <Text
+            style={{
+              color:
+                status === Status.FINDING
+                  ? 'orange'
+                  : status === Status.FOUND_PASSENGER
+                  ? 'green'
+                  : 'red',
+            }}
+          >
+            Status:{' '}
+            {status === Status.FINDING
+              ? 'Finding passenger! '
+              : status === Status.FOUND_PASSENGER
+              ? 'Found passenger!'
+              : 'Stopped finding! '}
+            {/* {status &&
+                `Will disconnect in ${disconnectCountdown} second${
+                  disconnectCountdown > 1 ? 's' : ''
+                }`} */}
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );

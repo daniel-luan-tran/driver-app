@@ -61,9 +61,9 @@ export default function DestinationSearch() {
       const location = await Location.getCurrentPositionAsync({});
       const { coords } = location;
       const { latitude, longitude } = coords;
-      console.log(location);
+      console.log('1', location);
       const currentLocationJson = await reverseGeocoding(latitude, longitude);
-      console.log(currentLocationJson.results[0].formatted_address);
+      console.log('2', currentLocationJson.results[0].formatted_address);
       setCurrentLocation(currentLocationJson.results[0].formatted_address);
       setStartCor({
         latitude: latitude,

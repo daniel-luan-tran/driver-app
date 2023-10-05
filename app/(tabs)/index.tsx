@@ -73,14 +73,20 @@ export default function TabIndexScreen() {
       try {
         await checkDriverRole();
       } catch (error) {
-        const logoutLink = await logout();
-        router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
+        if (isLocalLogin) {
+          await handleLocalLogout();
+        } else {
+          const logoutLink = await logout();
+          router.push(`/modal?viewType=LOGOUT_VIEW&logoutLink=${logoutLink}`);
+        }
       }
     };
-    checkValidRole();
-    navigation.addListener('focus', (payload) => {
+    if (user) {
       checkValidRole();
-    });
+      navigation.addListener('focus', (payload) => {
+        checkValidRole();
+      });
+    }
   }, [user]);
 
   const openModalLogin = async () => {
@@ -109,6 +115,9 @@ export default function TabIndexScreen() {
 
   return (
     <View style={styles.container}>
+      <Text style={{ marginBottom: 20, fontWeight: '900', fontSize: 24 }}>
+        DRIVER APP
+      </Text>
       {!user ? (
         <View>
           <Button title="Login with Azure Microsoft" onPress={openModalLogin} />

@@ -56,3 +56,14 @@ export type User = {
   account: Account;
   // currentPlace?: Coordinates;
 };
+
+export type PassengerRoute = {
+  from: {
+    startLat: number;
+    startLng: number;
+  };
+  to: {
+    latitude: number;
+    longitude: number;
+  };
+};
