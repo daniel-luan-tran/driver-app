@@ -5,10 +5,11 @@ export const updateUser = async (
   id: string,
   updatedUser: Account,
 ): Promise<Account> => {
+  const { Driver, ...account } = updatedUser;
   const response = await axios.put<Account>(
     `/v1/azureDrivers/${id}`,
     {
-      ...updatedUser,
+      ...account,
     },
     authConfig,
   );

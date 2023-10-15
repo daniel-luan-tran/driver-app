@@ -18,15 +18,28 @@ export type DriverType = {
   name: string;
 };
 
+export type BookingHistoryUpdate = {
+  userId: string;
+  driverId: string;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  status: string;
+};
+
 export type BookingHistory = {
   id: string;
-  accountId: string;
-  account: Account;
+  userId: string;
+  user: User;
   driverId: string;
   driver: Driver;
   bookAt: Date;
-  from: string;
-  to: string;
+  startLat: number;
+  startLng: number;
+  endLat: number;
+  endLng: number;
+  status: string;
 };
 
 export type Account = {
@@ -63,7 +76,7 @@ export type PassengerRoute = {
     startLng: number;
   };
   to: {
-    latitude: number;
-    longitude: number;
+    endLat: number;
+    endLng: number;
   };
 };

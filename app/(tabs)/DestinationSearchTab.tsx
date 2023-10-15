@@ -12,11 +12,10 @@ export default function TabThreeScreen() {
 
   useEffect(() => {
     const checkValidRole = async () => {
-      setIsValidRole(true);
       try {
         const _driver = await checkDriverRole();
         if (!_driver) setIsValidRole(false);
-        setIsValidRole(true);
+        else setIsValidRole(true);
       } catch (error) {
         setIsValidRole(false);
       }
@@ -36,7 +35,9 @@ export default function TabThreeScreen() {
     return (
       <View style={styles.container}>
         <View style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-          <Text style={{ marginBottom: 10 }}>You are Passenger or Driver?</Text>
+          <Text style={{ marginBottom: 10, textAlign: 'center' }}>
+            You are Passenger or Driver?
+          </Text>
           <Button
             title="Log in and update your profile"
             onPress={handleOpenUpdateProfile}

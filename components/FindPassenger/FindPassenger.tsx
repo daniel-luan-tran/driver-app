@@ -14,7 +14,7 @@ import { Text, View } from '../Themed';
 import Colors from '@/constants/Colors';
 import io, { Socket } from 'socket.io-client';
 import { connectSocket } from '@/api/connectSocket';
-import { checkDriverRole, checkUser } from '@/api';
+import { addNewBooking, checkDriverRole, checkUser } from '@/api';
 import { Account, PassengerRoute } from '@/types';
 import { useNavigation, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
@@ -31,15 +31,14 @@ enum Status {
 export default function FindPassenger() {
   const [socket, setSocket] = useState<Socket>();
   const [status, setStatus] = useState<Status>();
-  const [disconnectCountdown, setDisconnectCountdown] = useState<number>(0);
-  const [activeIntervals, setActiveIntervals] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [connecting, setConnecting] = useState<boolean>(false);
+  const [passengerAccepted, setPassengerAccepted] = useState<boolean>(false);
   const [driver, setDriver] = useState<Account | undefined>();
+  const [passenger, setPassenger] = useState<Account | undefined>();
   const [passengerRoute, setPassengerRoute] = useState<PassengerRoute>();
 
   const isDarkMode = useColorScheme() === 'dark';
-  const timeoutConnect = 60; // Second
   const navigation = useNavigation();
 
   const backgroundStyle = {
@@ -55,11 +54,10 @@ export default function FindPassenger() {
 
   useEffect(() => {
     const checkValidRole = async () => {
-      setIsValidRole(true);
       try {
         const _driverType = await checkDriverRole();
         if (!_driverType) setIsValidRole(false);
-        setIsValidRole(true);
+        else setIsValidRole(true);
       } catch (error) {
         setIsValidRole(false);
       }
@@ -74,8 +72,8 @@ export default function FindPassenger() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const data = await checkUser();
-        setDriver(data);
+        const user = await checkUser();
+        setDriver(user);
       } catch (error) {
         setDriver(undefined);
       }
@@ -87,22 +85,10 @@ export default function FindPassenger() {
   }, []);
 
   useEffect(() => {
-    // if (status) {
-    //   const timerId = setInterval(() => {
-    //     setDisconnectCountdown((prevCount) => prevCount - 1);
-    //   }, 1000);
-    //   setActiveIntervals((prevIds) => [
-    //     ...prevIds,
-    //     timerId as unknown as number,
-    //   ]);
-    // } else {
-    //   activeIntervals.forEach((intervalId) => clearInterval(intervalId));
-    // }
-    console.log(status);
-  }, [status]);
+    console.log(isValidRole);
+  }, [isValidRole]);
 
   const passengerRequest = async () => {
-    // setDisconnectCountdown(timeoutConnect);
     setLoading(true);
     const _socket = await connectSocket();
     setConnecting(true);
@@ -113,6 +99,14 @@ export default function FindPassenger() {
 
         _socket.on('driverRequest', (data) => {
           console.log('passengerRoute: ', data);
+          setPassengerRoute(data.passengerRoute);
+          setPassenger(data.passengerAccount);
+          setLoading(false);
+          setStatus(Status.FOUND_PASSENGER);
+        });
+
+        _socket.on('foundDriver', (data) => {
+          console.log('passengerRoute: ', data);
           setPassengerRoute(data);
           setLoading(false);
           setStatus(Status.FOUND_PASSENGER);
@@ -121,6 +115,8 @@ export default function FindPassenger() {
 
       _socket.on('disconnect', () => {
         setStatus(Status.STOPPED_FINDING);
+        setLoading(false);
+        setPassengerAccepted(false);
       });
 
       _socket.on('passengerDisconnect', () => {
@@ -128,9 +124,6 @@ export default function FindPassenger() {
       });
 
       setSocket(_socket);
-      // setInterval(() => {
-      //   _socket.disconnect();
-      // }, timeoutConnect * 1000);
     }
   };
 
@@ -138,19 +131,34 @@ export default function FindPassenger() {
     if (!socket) return;
     const location = await Location.getCurrentPositionAsync({});
     const { coords } = location;
-    socket.emit('acceptPassenger', coords);
+    socket.emit('acceptPassenger', {
+      driverLocation: coords,
+      driverAccount: driver,
+    });
+
+    if (passenger && driver && passengerRoute) {
+      const bookingHistory = await addNewBooking({
+        userId: passenger?.id,
+        driverId: driver?.id,
+        startLat: passengerRoute?.from.startLat,
+        startLng: passengerRoute?.from.startLng,
+        endLat: passengerRoute?.to.endLat,
+        endLng: passengerRoute?.to.endLng,
+        status: 'SUCCESS',
+      });
+    }
+
+    setPassengerAccepted(true);
   };
 
   const onDisconnectSocket = async () => {
-    console.log(_apiUrl);
     if (_apiUrl) {
       socket?.emit('driverDisconnect');
       // socket?.disconnect();
-      if (socket?.disconnected) {
-        setStatus(Status.STOPPED_FINDING);
-        setConnecting(false);
-        setLoading(false);
-      }
+      setStatus(Status.STOPPED_FINDING);
+      setConnecting(false);
+      setLoading(false);
+      setPassengerAccepted(false);
     }
   };
 
@@ -185,19 +193,24 @@ export default function FindPassenger() {
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
           backgroundColor={backgroundStyle.backgroundColor.background}
         />
-        <View style={{ height: '80%' }}>
-          <RouteMap passengerRoute={passengerRoute} />
-        </View>
+        {status === Status.FOUND_PASSENGER && connecting && (
+          <View style={{ height: '80%' }}>
+            <RouteMap passengerRoute={passengerRoute} />
+          </View>
+        )}
+
         <TouchableOpacity style={{ marginBottom: 0 }}>
           {loading ? (
             <ActivityIndicator size="large" />
-          ) : status === Status.FOUND_PASSENGER ? (
+          ) : status === Status.FOUND_PASSENGER && !passengerAccepted ? (
             <Button title="Accept passenger" onPress={passengerAccept} />
           ) : (
-            <Button title="Find passenger" onPress={passengerRequest} />
+            !passengerAccepted && (
+              <Button title="Find passenger" onPress={passengerRequest} />
+            )
           )}
 
-          {connecting && (
+          {connecting && status !== Status.STOPPED_FINDING && (
             <Button
               title="Stop finding"
               onPress={onDisconnectSocket}
@@ -220,10 +233,6 @@ export default function FindPassenger() {
               : status === Status.FOUND_PASSENGER
               ? 'Found passenger!'
               : 'Stopped finding! '}
-            {/* {status &&
-                `Will disconnect in ${disconnectCountdown} second${
-                  disconnectCountdown > 1 ? 's' : ''
-                }`} */}
           </Text>
         </TouchableOpacity>
       </View>

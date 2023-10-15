@@ -35,8 +35,13 @@ export default function RouteMap({ passengerRoute }: RouteMapProps) {
 
   useEffect(() => {
     (async () => {
-      const location = await Location.getCurrentPositionAsync({});
-      setCurrentLocation(location.coords);
+      // const location = await Location.getCurrentPositionAsync({});
+      // setCurrentLocation(location.coords);
+      // Fake current location
+      setCurrentLocation({
+        latitude: 10.7496697,
+        longitude: 106.6509839,
+      });
     })();
   }, []);
 
@@ -84,8 +89,8 @@ export default function RouteMap({ passengerRoute }: RouteMapProps) {
                 longitude: _passengerRoute.from.startLng,
               }}
               destination={{
-                latitude: _passengerRoute.to.latitude,
-                longitude: _passengerRoute.to.longitude,
+                latitude: _passengerRoute.to.endLat,
+                longitude: _passengerRoute.to.endLng,
               }}
               apikey={googleMapApiKey}
               strokeWidth={5}
@@ -94,8 +99,8 @@ export default function RouteMap({ passengerRoute }: RouteMapProps) {
             <MapMarker
               title="Destination"
               coordinate={{
-                latitude: _passengerRoute.to.latitude,
-                longitude: _passengerRoute.to.longitude,
+                latitude: _passengerRoute.to.endLat,
+                longitude: _passengerRoute.to.endLng,
               }}
             />
           </>
