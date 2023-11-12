@@ -14,11 +14,23 @@ import { Text, View } from '../Themed';
 import Colors from '@/constants/Colors';
 import io, { Socket } from 'socket.io-client';
 import { connectSocket } from '@/api/connectSocket';
-import { addNewBooking, checkDriverRole, checkUser } from '@/api';
-import { Account, PassengerRoute } from '@/types';
+import {
+  addNewBooking,
+  checkDriverRole,
+  checkUser,
+  updateBooking,
+} from '@/api';
+import {
+  Account,
+  BookingHistory,
+  BookingHistoryUpdate,
+  Coordinates,
+  PassengerRoute,
+} from '@/types';
 import { useNavigation, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import RouteMap from '../RouteMap/RouteMap';
+import { BOOKINGSTATUS } from '@/types/enum';
 
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -37,6 +49,8 @@ export default function FindPassenger() {
   const [driver, setDriver] = useState<Account | undefined>();
   const [passenger, setPassenger] = useState<Account | undefined>();
   const [passengerRoute, setPassengerRoute] = useState<PassengerRoute>();
+  const [bookingHistory, setBookingHistory] = useState<BookingHistory>();
+  const [currentLocation, setCurrentLocation] = useState<Coordinates>();
 
   const isDarkMode = useColorScheme() === 'dark';
   const navigation = useNavigation();
@@ -55,9 +69,11 @@ export default function FindPassenger() {
   useEffect(() => {
     const checkValidRole = async () => {
       try {
-        const _driverType = await checkDriverRole();
-        if (!_driverType) setIsValidRole(false);
-        else setIsValidRole(true);
+        const _driver = await checkDriverRole();
+        const _driverType = _driver?.driverTypeId;
+        if (!_driverType || !_driver) {
+          setIsValidRole(false);
+        } else setIsValidRole(true);
       } catch (error) {
         setIsValidRole(false);
       }
@@ -123,32 +139,64 @@ export default function FindPassenger() {
         _socket.disconnect();
       });
 
+      _socket.on('userCancelBooking', async () => {
+        console.log('userCancelBooking');
+        await cancelBooking(BOOKINGSTATUS.USER_CANCEL);
+        console.log('canceled');
+        _socket.emit('updatedBooking');
+      });
+
       setSocket(_socket);
     }
   };
 
   const passengerAccept = async () => {
     if (!socket) return;
-    const location = await Location.getCurrentPositionAsync({});
-    const { coords } = location;
+    // const location = await Location.getCurrentPositionAsync({});
+    // const { coords } = location;
+    // Fake current location
+    const coords = { latitude: 10.7496697, longitude: 106.6509839 };
+
+    setCurrentLocation(coords);
     socket.emit('acceptPassenger', {
       driverLocation: coords,
       driverAccount: driver,
     });
 
     if (passenger && driver && passengerRoute) {
-      const bookingHistory = await addNewBooking({
+      const _bookingHistory = await addNewBooking({
         userId: passenger?.id,
         driverId: driver?.id,
         startLat: passengerRoute?.from.startLat,
         startLng: passengerRoute?.from.startLng,
         endLat: passengerRoute?.to.endLat,
         endLng: passengerRoute?.to.endLng,
-        status: 'SUCCESS',
+        status: BOOKINGSTATUS.SUCCESS,
       });
+      console.log('_bookingHistory', _bookingHistory);
+      setBookingHistory(_bookingHistory);
     }
 
     setPassengerAccepted(true);
+  };
+
+  const cancelBooking = async (whoCancel: BOOKINGSTATUS) => {
+    if (bookingHistory) {
+      console.log('bookingHistory', bookingHistory);
+      const { driver, user, ...bookingHistoryUpdate } = bookingHistory;
+      console.log('bookingHistoryUpdate', bookingHistoryUpdate);
+      const { status, ..._bookingHistoryUpdate } = bookingHistoryUpdate;
+
+      const data = {
+        status: whoCancel,
+        ..._bookingHistoryUpdate,
+      };
+      const updatedBookingHistory = await updateBooking(bookingHistory?.id, {
+        ...data,
+      });
+      setBookingHistory(updatedBookingHistory);
+      onDisconnectSocket();
+    }
   };
 
   const onDisconnectSocket = async () => {
@@ -194,8 +242,11 @@ export default function FindPassenger() {
           backgroundColor={backgroundStyle.backgroundColor.background}
         />
         {status === Status.FOUND_PASSENGER && connecting && (
-          <View style={{ height: '80%' }}>
-            <RouteMap passengerRoute={passengerRoute} />
+          <View style={{ height: '90%' }}>
+            <RouteMap
+              passengerRoute={passengerRoute}
+              currentLocation={currentLocation}
+            />
           </View>
         )}
 
@@ -211,11 +262,21 @@ export default function FindPassenger() {
           )}
 
           {connecting && status !== Status.STOPPED_FINDING && (
-            <Button
-              title="Stop finding"
-              onPress={onDisconnectSocket}
-              color={'grey'}
-            />
+            <View>
+              {passengerAccepted ? (
+                <Button
+                  title="Cancel booking"
+                  onPress={() => cancelBooking(BOOKINGSTATUS.DRIVER_CANCEL)}
+                  color={'grey'}
+                />
+              ) : (
+                <Button
+                  title="Stop finding"
+                  onPress={onDisconnectSocket}
+                  color={'grey'}
+                />
+              )}
+            </View>
           )}
           <Text
             style={{

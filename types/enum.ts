@@ -1,7 +1,7 @@
 export enum driverType {
-  car = 'car',
-  van = 'van',
-  moto = 'moto',
+  Car = 'Car',
+  Van = 'Van',
+  Motobike = 'Motobike',
 }
 
 export enum DynamicView {
@@ -9,4 +9,10 @@ export enum DynamicView {
   AUTH_VIEW_LOCAL = 'AUTH_VIEW_LOCAL',
   LOGOUT_VIEW = 'LOGOUT_VIEW',
   SEARCHRESULT_VIEW = 'SEARCHRESULT_VIEW',
+}
+
+export enum BOOKINGSTATUS {
+  SUCCESS = 'SUCCESS',
+  DRIVER_CANCEL = 'DRIVER_CANCEL',
+  USER_CANCEL = 'USER_CANCEL',
 }

@@ -6,9 +6,21 @@ export const addNewBooking = async (
 ): Promise<BookingHistory> => {
   const response = await axios.post<BookingHistory>(
     `/v1/booking-history`,
-    {
-      ...data,
-    },
+    data,
+    authConfig,
+  );
+
+  return response.data;
+};
+
+export const updateBooking = async (
+  id: string,
+  data: BookingHistoryUpdate,
+): Promise<BookingHistory> => {
+  console.log('data', data);
+  const response = await axios.put<BookingHistory>(
+    `/v1/booking-history/${id}`,
+    data,
     authConfig,
   );
 

@@ -2,6 +2,7 @@ import {
   GooglePlaceData,
   GooglePlaceDetail,
 } from 'react-native-google-places-autocomplete';
+import { BOOKINGSTATUS } from './enum';
 
 export type GoogleData = {
   data: GooglePlaceData;
@@ -25,7 +26,7 @@ export type BookingHistoryUpdate = {
   startLng: number;
   endLat: number;
   endLng: number;
-  status: string;
+  status: BOOKINGSTATUS;
 };
 
 export type BookingHistory = {
@@ -39,7 +40,7 @@ export type BookingHistory = {
   startLng: number;
   endLat: number;
   endLng: number;
-  status: string;
+  status: BOOKINGSTATUS;
 };
 
 export type Account = {

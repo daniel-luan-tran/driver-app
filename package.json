@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start --port 8082",
-    "android": "expo start --android",
+    "android": "expo start --android --port 8082 no_1_mobile",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",

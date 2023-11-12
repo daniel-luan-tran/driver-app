@@ -27,21 +27,19 @@ import * as Location from 'expo-location';
 
 interface RouteMapProps {
   passengerRoute?: PassengerRoute;
+  currentLocation?: Coordinates;
 }
 
-export default function RouteMap({ passengerRoute }: RouteMapProps) {
-  const [currentLocation, setCurrentLocation] = useState<Coordinates>();
+export default function RouteMap({
+  passengerRoute,
+  currentLocation,
+}: RouteMapProps) {
+  const [_currentLocation, _setCurrentLocation] = useState<Coordinates>();
   const [_passengerRoute, _setPassengerRoute] = useState<PassengerRoute>();
 
   useEffect(() => {
     (async () => {
-      // const location = await Location.getCurrentPositionAsync({});
-      // setCurrentLocation(location.coords);
-      // Fake current location
-      setCurrentLocation({
-        latitude: 10.7496697,
-        longitude: 106.6509839,
-      });
+      _setCurrentLocation(currentLocation);
     })();
   }, []);
 
