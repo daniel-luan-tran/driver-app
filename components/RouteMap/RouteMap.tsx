@@ -44,10 +44,15 @@ export default function RouteMap({
   }, []);
 
   useEffect(() => {
+    console.log('passengerRoute', passengerRoute);
+    console.log('currentLocation', currentLocation);
+  }, [passengerRoute, currentLocation]);
+
+  useEffect(() => {
     _setPassengerRoute(passengerRoute);
   }, [passengerRoute]);
 
-  if (!_passengerRoute || !currentLocation) return null;
+  if (!_passengerRoute) return null;
 
   return (
     <View style={styles.homeMapContainer}>
@@ -63,12 +68,14 @@ export default function RouteMap({
       >
         {googleMapApiKey && _passengerRoute?.from && _passengerRoute?.to && (
           <>
-            <MapMarker title="Current Location" coordinate={currentLocation}>
-              <Image
-                style={{ width: 30, height: 30, resizeMode: 'contain' }}
-                source={getImage('Current')}
-              />
-            </MapMarker>
+            {currentLocation && (
+              <MapMarker title="Current Location" coordinate={currentLocation}>
+                <Image
+                  style={{ width: 30, height: 30, resizeMode: 'contain' }}
+                  source={getImage('Current')}
+                />
+              </MapMarker>
+            )}
             <MapMarker
               title="Origin"
               coordinate={{

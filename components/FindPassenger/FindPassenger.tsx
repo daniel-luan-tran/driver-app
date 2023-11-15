@@ -139,11 +139,15 @@ export default function FindPassenger() {
         _socket.disconnect();
       });
 
-      _socket.on('userCancelBooking', async () => {
-        console.log('userCancelBooking');
-        await cancelBooking(BOOKINGSTATUS.USER_CANCEL);
-        console.log('canceled');
-        _socket.emit('updatedBooking');
+      _socket.on('userCancelBooking', () => {
+        setBookingHistory((prevBookingHistory) => {
+          console.log('userCancelBooking', prevBookingHistory);
+          prevBookingHistory &&
+            cancelBooking(prevBookingHistory, BOOKINGSTATUS.USER_CANCEL);
+          console.log('canceled');
+          _socket.emit('updatedBooking');
+          return prevBookingHistory; // return the previous state
+        });
       });
 
       setSocket(_socket);
@@ -180,10 +184,12 @@ export default function FindPassenger() {
     setPassengerAccepted(true);
   };
 
-  const cancelBooking = async (whoCancel: BOOKINGSTATUS) => {
-    if (bookingHistory) {
-      console.log('bookingHistory', bookingHistory);
-      const { driver, user, ...bookingHistoryUpdate } = bookingHistory;
+  const cancelBooking = async (
+    _bookingHistory: BookingHistory,
+    whoCancel: BOOKINGSTATUS,
+  ) => {
+    if (_bookingHistory) {
+      const { driver, user, ...bookingHistoryUpdate } = _bookingHistory;
       console.log('bookingHistoryUpdate', bookingHistoryUpdate);
       const { status, ..._bookingHistoryUpdate } = bookingHistoryUpdate;
 
@@ -191,7 +197,7 @@ export default function FindPassenger() {
         status: whoCancel,
         ..._bookingHistoryUpdate,
       };
-      const updatedBookingHistory = await updateBooking(bookingHistory?.id, {
+      const updatedBookingHistory = await updateBooking(_bookingHistory?.id, {
         ...data,
       });
       setBookingHistory(updatedBookingHistory);
@@ -266,7 +272,10 @@ export default function FindPassenger() {
               {passengerAccepted ? (
                 <Button
                   title="Cancel booking"
-                  onPress={() => cancelBooking(BOOKINGSTATUS.DRIVER_CANCEL)}
+                  onPress={() =>
+                    bookingHistory &&
+                    cancelBooking(bookingHistory, BOOKINGSTATUS.DRIVER_CANCEL)
+                  }
                   color={'grey'}
                 />
               ) : (
