@@ -30,7 +30,7 @@ import {
 import { useNavigation, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import RouteMap from '../RouteMap/RouteMap';
-import { BOOKINGSTATUS } from '@/types/enum';
+import { BOOKINGSTATUS, BOOKINGTYPE } from '@/types/enum';
 
 const _apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
@@ -176,6 +176,7 @@ export default function FindPassenger() {
         endLat: passengerRoute?.to.endLat,
         endLng: passengerRoute?.to.endLng,
         status: BOOKINGSTATUS.SUCCESS,
+        bookingType: BOOKINGTYPE.MOBILE_APP,
       });
       console.log('_bookingHistory', _bookingHistory);
       setBookingHistory(_bookingHistory);

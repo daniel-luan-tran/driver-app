@@ -38,13 +38,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="DestinationSearchTab"
-        options={{
-          title: 'Where to? (DRIVER APP)',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
-        }}
-      />
     </Tabs>
   );
 }
