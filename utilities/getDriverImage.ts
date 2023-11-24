@@ -4,7 +4,7 @@ export const getImage = (type: string) => {
       return require('../assets/images/car.png');
     case 'Van':
       return require('../assets/images/van.png');
-    case 'Mototobike':
+    case 'Motobike':
       return require('../assets/images/moto.png');
     case 'Current':
       return require('../assets/images/current.png');

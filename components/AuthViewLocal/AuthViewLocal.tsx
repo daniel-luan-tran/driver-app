@@ -58,8 +58,8 @@ export default function AuthViewLocal() {
           <Text>Name: </Text>
           <TextInput
             placeholder="Enter your email"
-            value="driver@dalutech"
-            onChangeText={(text) => {}}
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -67,8 +67,8 @@ export default function AuthViewLocal() {
           <TextInput
             placeholder="Enter your password"
             secureTextEntry={true}
-            value="123456"
-            onChangeText={(text) => {}}
+            value={password}
+            onChangeText={setPassword}
           />
         </View>
         <Button title="Login" onPress={login} />

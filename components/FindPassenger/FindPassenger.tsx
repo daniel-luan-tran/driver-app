@@ -111,7 +111,7 @@ export default function FindPassenger() {
     if (_socket) {
       setStatus(Status.FINDING);
       _socket.on('connect', () => {
-        _socket.emit('passengerRequest', 'passengerRequest');
+        _socket.emit('passengerRequest', driver?.Driver?.driverTypeId);
 
         _socket.on('driverRequest', (data) => {
           console.log('passengerRoute: ', data);

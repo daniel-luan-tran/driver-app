@@ -17,6 +17,7 @@ export type Coordinates = {
 export type DriverType = {
   id: number;
   name: string;
+  priceUsd: number;
 };
 
 export type BookingHistoryUpdate = {
