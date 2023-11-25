@@ -17,6 +17,7 @@ import { connectSocket } from '@/api/connectSocket';
 import {
   addNewBooking,
   checkDriverRole,
+  checkJwt,
   checkUser,
   updateBooking,
 } from '@/api';
@@ -88,7 +89,7 @@ export default function FindPassenger() {
   useEffect(() => {
     const getUser = async () => {
       try {
-        const user = await checkUser();
+        const user = await checkJwt();
         setDriver(user);
       } catch (error) {
         setDriver(undefined);
