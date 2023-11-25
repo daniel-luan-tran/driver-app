@@ -1,5 +1,5 @@
 import { Account } from '@/types';
-import axios, { authConfig } from './axios'; // authConfig
+import axios, { authConfig, authConfigToken } from './axios'; // authConfig
 
 export const updateUser = async (
   id: string,
@@ -7,11 +7,11 @@ export const updateUser = async (
 ): Promise<Account> => {
   const { Driver, ...account } = updatedUser;
   const response = await axios.put<Account>(
-    `/v1/azureDrivers/${id}`,
+    `/v1/jwtDrivers/${id}`,
     {
       ...account,
     },
-    authConfig,
+    await authConfigToken(),
   );
 
   return response.data;

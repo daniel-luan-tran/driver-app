@@ -5,11 +5,13 @@ import Colors from '@/constants/Colors';
 import { useNavigation, useRouter } from 'expo-router';
 import {
   checkDriverRole,
+  checkJwt,
   checkUser,
   connectSocket,
   getDriverTypes,
   localLogout,
   logout,
+  logoutJwt,
   updateUser,
 } from '@/api';
 import { Driver, DriverType, Account } from '@/types';
@@ -35,7 +37,9 @@ export default function TabIndexScreen() {
   const [isLocalLogin, setIsLocalLogin] = useState<boolean | undefined>();
   const getUser = async () => {
     try {
-      const data = await checkUser();
+      const data = await checkJwt();
+      if (!data) return;
+
       setUser(data);
       console.log(data);
       setUpdatedUser(data);
@@ -109,7 +113,7 @@ export default function TabIndexScreen() {
   };
 
   const handleLocalLogout = async () => {
-    await localLogout();
+    await logoutJwt();
     await getUser();
   };
 
@@ -188,6 +192,7 @@ export default function TabIndexScreen() {
                 setValue={setDriverType}
                 setItems={setDriverTypeList}
                 onSelectItem={(value) => {
+                  console.log('updatedUser', updatedUser);
                   if (updatedUser) {
                     const _updateUser: Account = {
                       ...updatedUser,

@@ -12,7 +12,7 @@ import {
 import { Text, View } from '../Themed';
 import Colors from '@/constants/Colors';
 import { useRouter } from 'expo-router';
-import { loginLocal } from '@/api';
+import { loginJwt, loginLocal, saveJwt } from '@/api';
 const EXPO_PUBLIC_API_URL = process.env.EXPO_PUBLIC_API_URL;
 const EXPO_PUBLIC_DRIVER_EMAIL = process.env.EXPO_PUBLIC_DRIVER_EMAIL;
 const EXPO_PUBLIC_DRIVER_PASSWORD = process.env.EXPO_PUBLIC_DRIVER_PASSWORD;
@@ -32,7 +32,8 @@ export default function AuthViewLocal() {
   const login = async () => {
     setIsloading(true);
     try {
-      const user = await loginLocal({ email, password });
+      const jwt = await loginJwt({ email, password });
+      await saveJwt(jwt);
       setTimeout(() => {
         router.push('/(tabs)/');
       }, 500);
